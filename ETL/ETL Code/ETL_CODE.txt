@@ -1,0 +1,152 @@
+-- Creación de la "External Table" para el archivo "ventas.csv": 
+
+CREATE TABLE ventas_ext
+(
+ventas_id NUMBER(4),
+fecha CHAR(10),
+artista_id NUMBER(10),
+monto NUMBER(10,2),
+pais_origen VARCHAR(50)
+)
+ORGANIZATION EXTERNAL
+(
+ TYPE ORACLE_LOADER
+ DEFAULT DIRECTORY ETL_FILES_DIR
+ ACCESS PARAMETERS (
+   RECORDS DELIMITED BY NEWLINE
+   CHARACTERSET WE8ISO8859P1
+   FIELDS TERMINATED BY ','
+   MISSING FIELD VALUES ARE NULL
+   (
+   ventas_id CHAR(4),
+   fecha CHAR(10),
+   artista_id CHAR(10),
+   monto CHAR(10),
+   pais_origen CHAR(50)
+ )
+ )
+ LOCATION ('ventas.csv')
+)
+REJECT LIMIT UNLIMITED;
+
+-- Creación de la Tabla de Destino 'ventas_final':
+
+CREATE TABLE ventas_final(
+    ventas_final_id NUMBER PRIMARY KEY,
+    fecha DATE,
+    artista_id NUMBER,
+    monto NUMBER,
+    pais_origen VARCHAR2(50),
+    categoria VARCHAR2(20) 
+)
+
+-- Creación de secuencia para el "ventas_final_id" Tabla de Destino 'ventas_final':
+
+CREATE SEQUENCE ventas_final_seq
+START WITH 1
+INCREMENT BY 1
+NOCACHE;
+
+-- Evitar el error ORA-10027 (desbordamiento de buffer):
+EXECUTE dbms_session.reset_package;
+SET SERVEROUTPUT ON SIZE UNLIMITED
+EXECUTE sys.dbms_output.enable(NULL);
+CLEAR SCREEN
+
+-- Realizo una consulta simple para comprobar la información de la Tabla Externa
+   select * from ventas_ext;
+   
+-- Mediante esta consulta se puede ver la información de la Tabla Externa con más detalle:   
+   SELECT column_name, data_type, data_length, data_precision, data_scale
+   FROM user_tab_columns
+   WHERE table_name = 'VENTAS_EXT';
+   
+-- Primer Procedimiento Almacenado: Convertir las el tipo CHAR de "fecha" a DATE:
+create or replace procedure format_data (
+    p_ventas_id_sin_convertir IN OUT ventas_ext.ventas_id%type,
+    p_cadena_fecha_sin_convertir IN OUT ventas_ext.fecha%type,
+    p_artista_id_sin_convertir IN OUT ventas_ext.artista_id%type,
+    p_monto_sin_convertir IN OUT ventas_ext.monto%type)   
+as
+-- Declaración de variables y constantes:
+v_ventas_id_convertido NUMBER;
+v_cadena_fecha_convertida DATE;
+v_artista_id_convertido NUMBER;
+v_monto_convertido NUMBER;
+
+v_condicion CONSTANT BOOLEAN :=
+ p_ventas_id_sin_convertir IS NOT NULL 
+ AND p_cadena_fecha_sin_convertir IS NOT NULL 
+ AND p_artista_id_sin_convertir IS NOT NULL
+ AND p_monto_sin_convertir IS NOT NULL;
+
+BEGIN
+    IF v_condicion THEN
+    -- Convertir el 'id_ventas' de tipo CHAR a tipo NUMBER:
+      v_ventas_id_convertido := TO_NUMBER(p_ventas_id_sin_convertir);
+      
+    -- Convertir la 'fecha' de tipo CHAR a tipo DATE:
+      v_cadena_fecha_convertida := TO_DATE(p_cadena_fecha_sin_convertir, 'YYYY-MM-DD');
+      
+    -- Convertir el 'artista_id' de tipo CHAR a tipo NUMBER:
+      v_artista_id_convertido := TO_NUMBER(p_artista_id_sin_convertir);
+      
+    -- Convertir el 'monto' de tipo CHAR a tipo NUMBER:
+      v_monto_convertido := TO_NUMBER(p_monto_sin_convertir);
+    END IF;
+END;
+/
+
+-- Segundo Procedimiento Almacenado: Eliminar Valores Negativos del Monto:
+create or replace procedure adjust_amount (p_monto IN OUT NUMBER)   
+as
+BEGIN
+ IF p_monto < 0 THEN
+ p_monto := 0; 
+ END IF;
+END;
+/
+
+-- Tercer Procedimiento Almacenado: Asignación de Categoría 'Internacional' o 'Nacional':
+create or replace procedure international_category (p_pais_origen VARCHAR2, p_categoria OUT VARCHAR2)   
+as
+v_categoría_internacional VARCHAR2(20) := 'Internacional';
+v_categoría_nacional VARCHAR2(20) := 'Nacional';
+BEGIN
+ 
+ IF p_pais_origen != 'España' AND p_pais_origen != 'México' THEN
+    p_categoria := v_categoría_internacional;
+ ELSE
+    p_categoria := v_categoría_nacional;
+ END IF;
+END;
+/
+
+-- Creación del Bloque Anónimo:
+DECLARE 
+-- Colección para la extracción de los datos la External Table:
+   TYPE ventas_artistas IS TABLE OF ventas_ext%rowtype INDEX BY PLS_INTEGER;
+   
+-- Declaración de Variables:
+   VENTAS_ART ventas_artistas;
+   v_categoría VARCHAR2(20);
+BEGIN
+-- Extracción de los datos de la colección "ventas_artistas":
+   SELECT * BULK COLLECT INTO VENTAS_ART FROM ventas_ext;
+
+-- Para este caso particular usaré el bucle FOR en lugar de FORALL, debido a que hay operaciones más complejas:
+      FOR i IN 1..VENTAS_ART.COUNT LOOP
+      -- 1. Transformar al tipo de datos correcto (NUMBER & DATE):
+      format_data(VENTAS_ART(i).ventas_id, VENTAS_ART(i).fecha, VENTAS_ART(i).artista_id, VENTAS_ART(i).monto); 
+      
+      -- 2. Ajustar el Monto (reemplazar valores negativos por el valor 0):
+      adjust_amount (VENTAS_ART(i).monto);
+      
+      -- 3. Asignación de la categoría 'Internacional' o 'Nacional' según corresponda:
+      international_category(VENTAS_ART(i).pais_origen, v_categoría);
+
+      -- 4. Carga de datos en la Tabla de Destino: 'ventas_final':
+      -- (Pendiente por realizar).
+      
+      END LOOP;
+END;
