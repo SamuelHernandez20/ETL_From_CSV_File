@@ -1,5 +1,4 @@
 -- Creación de la "External Table" para el archivo "ventas.csv": 
-
 CREATE TABLE ventas_ext
 (
 ventas_id NUMBER(4),
@@ -30,7 +29,6 @@ ORGANIZATION EXTERNAL
 REJECT LIMIT UNLIMITED;
 
 -- Creación de la Tabla de Destino 'ventas_final':
-
 CREATE TABLE ventas_final(
     ventas_final_id NUMBER PRIMARY KEY,
     fecha DATE,
@@ -39,13 +37,6 @@ CREATE TABLE ventas_final(
     pais_origen VARCHAR2(50),
     categoria VARCHAR2(20) 
 )
-
--- Creación de secuencia para el "ventas_final_id" Tabla de Destino 'ventas_final':
-
-CREATE SEQUENCE ventas_final_seq
-START WITH 1
-INCREMENT BY 1
-NOCACHE;
 
 -- Evitar el error ORA-10027 (desbordamiento de buffer):
 EXECUTE dbms_session.reset_package;
@@ -68,13 +59,8 @@ create or replace procedure format_data (
     p_artista_id_sin_convertir IN OUT ventas_ext.artista_id%type,
     p_monto_sin_convertir IN OUT ventas_ext.monto%type)   
 as
--- Declaración de variables y constantes:
-v_ventas_id_convertido NUMBER;
-v_cadena_fecha_convertida DATE;
-v_artista_id_convertido NUMBER;
-v_monto_convertido NUMBER;
-
-v_condicion CONSTANT BOOLEAN :=
+-- Declaración de la constante para la condición:
+ v_condicion CONSTANT BOOLEAN :=
  p_ventas_id_sin_convertir IS NOT NULL 
  AND p_cadena_fecha_sin_convertir IS NOT NULL 
  AND p_artista_id_sin_convertir IS NOT NULL
@@ -83,16 +69,16 @@ v_condicion CONSTANT BOOLEAN :=
 BEGIN
     IF v_condicion THEN
     -- Convertir el 'id_ventas' de tipo CHAR a tipo NUMBER:
-      v_ventas_id_convertido := TO_NUMBER(p_ventas_id_sin_convertir);
+      p_ventas_id_sin_convertir := TO_NUMBER(p_ventas_id_sin_convertir);
       
     -- Convertir la 'fecha' de tipo CHAR a tipo DATE:
-      v_cadena_fecha_convertida := TO_DATE(p_cadena_fecha_sin_convertir, 'YYYY-MM-DD');
-      
+      p_cadena_fecha_sin_convertir := TO_DATE(p_cadena_fecha_sin_convertir, 'YYYY-MM-DD');
+
     -- Convertir el 'artista_id' de tipo CHAR a tipo NUMBER:
-      v_artista_id_convertido := TO_NUMBER(p_artista_id_sin_convertir);
+      p_artista_id_sin_convertir := TO_NUMBER(p_artista_id_sin_convertir);
       
     -- Convertir el 'monto' de tipo CHAR a tipo NUMBER:
-      v_monto_convertido := TO_NUMBER(p_monto_sin_convertir);
+      p_monto_sin_convertir := TO_NUMBER(p_monto_sin_convertir);
     END IF;
 END;
 /
@@ -103,6 +89,8 @@ as
 BEGIN
  IF p_monto < 0 THEN
  p_monto := 0; 
+ ELSE
+ p_monto := trunc(p_monto, 0);
  END IF;
 END;
 /
@@ -112,8 +100,7 @@ create or replace procedure international_category (p_pais_origen VARCHAR2, p_ca
 as
 v_categoría_internacional VARCHAR2(20) := 'Internacional';
 v_categoría_nacional VARCHAR2(20) := 'Nacional';
-BEGIN
- 
+BEGIN 
  IF p_pais_origen != 'España' AND p_pais_origen != 'México' THEN
     p_categoria := v_categoría_internacional;
  ELSE
@@ -130,12 +117,33 @@ DECLARE
 -- Declaración de Variables:
    VENTAS_ART ventas_artistas;
    v_categoría VARCHAR2(20);
+   v_error BOOLEAN := FALSE;
+   v_num_registros NUMBER;
+   
 BEGIN
 -- Extracción de los datos de la colección "ventas_artistas":
    SELECT * BULK COLLECT INTO VENTAS_ART FROM ventas_ext;
+   
+-- Borrado previo de la tabla:
+   DBMS_OUTPUT.PUT_LINE('## Borrado Previo de la Tabla de Destino: ' || '"ventas_final" ##');
 
+   select count(*) into v_num_registros from ventas_final;
+   IF v_num_registros > 0 THEN
+     DBMS_OUTPUT.PUT_LINE('⚠️​ La Tabla de Destino está llena ⚠️​. Ejecutando operación previa de borrado.');
+    delete from ventas_final;
+    ELSE
+    DBMS_OUTPUT.PUT_LINE('⚠️​ La Tabla de Destino está vacía ⚠️​. Omitiendo operación previa de borrado.');
+   END IF;
+
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('## Transformación y Carga de los datos en la Tabla de Destino: ' || '"ventas_final" ##');
+    
 -- Para este caso particular usaré el bucle FOR en lugar de FORALL, debido a que hay operaciones más complejas:
-      FOR i IN 1..VENTAS_ART.COUNT LOOP
+    FOR i IN 1..VENTAS_ART.COUNT LOOP
+      
+    -- Establecer un SAVEPOINT para revertir los cambios en caso de error:
+       SAVEPOINT iteracion_inicio;
+    BEGIN
       -- 1. Transformar al tipo de datos correcto (NUMBER & DATE):
       format_data(VENTAS_ART(i).ventas_id, VENTAS_ART(i).fecha, VENTAS_ART(i).artista_id, VENTAS_ART(i).monto); 
       
@@ -144,9 +152,31 @@ BEGIN
       
       -- 3. Asignación de la categoría 'Internacional' o 'Nacional' según corresponda:
       international_category(VENTAS_ART(i).pais_origen, v_categoría);
-
-      -- 4. Carga de datos en la Tabla de Destino: 'ventas_final':
-      -- (Pendiente por realizar).
       
-      END LOOP;
+      -- 4. Carga de datos en la Tabla de Destino: 'ventas_final':
+     INSERT INTO ventas_final VALUES(
+     VENTAS_ART(i).ventas_id, VENTAS_ART(i).fecha, 
+     VENTAS_ART(i).artista_id, VENTAS_ART(i).monto, 
+     VENTAS_ART(i).pais_origen, v_categoría);
+     
+     -- Si este proceso no generó ningún error, guardo los cambios:
+      COMMIT;
+     -- En caso de error, lo manejo con una excepción que revierta los cambios y registre el error: 
+      EXCEPTION
+            WHEN OTHERS THEN
+                -- En caso de error, se revierte el proceso de nuevo desde el SAVEPOINT:
+                ROLLBACK TO SAVEPOINT iteracion_inicio;
+                v_error := TRUE;     
+    END;
+    END LOOP;
+    
+    -- Evaluar si surgió algún error durante el proceso, e imprimir un mensaje indicándolo:
+      IF v_error THEN
+        DBMS_OUTPUT.PUT_LINE('❌​ Surgió un error en alguna iteración del bucle.');
+        ELSE
+        DBMS_OUTPUT.PUT_LINE('​✅​ El proceso se completó de forma correcta.');
+      END IF; 
 END;
+
+-- Mostrar el contenido cargado en la Tabla de Destino:
+ select * from ventas_final;
