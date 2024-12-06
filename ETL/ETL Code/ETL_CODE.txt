@@ -100,7 +100,8 @@ create or replace procedure international_category (p_pais_origen VARCHAR2, p_ca
 as
 v_categoría_internacional VARCHAR2(20) := 'Internacional';
 v_categoría_nacional VARCHAR2(20) := 'Nacional';
-BEGIN 
+BEGIN
+ 
  IF p_pais_origen != 'España' AND p_pais_origen != 'México' THEN
     p_categoria := v_categoría_internacional;
  ELSE
@@ -109,6 +110,12 @@ BEGIN
 END;
 /
 
+/* Encapsulo toda la lógica en un procedimiento general: 'run_etl_process'. 
+   Para luego automatizar el proceso usando: 'DBMS_SCHEDULER.CREATE_JOB'. */
+
+CREATE OR REPLACE PROCEDURE run_etl_process 
+IS
+BEGIN
 -- Creación del Bloque Anónimo:
 DECLARE 
 -- Colección para la extracción de los datos la External Table:
@@ -129,10 +136,10 @@ BEGIN
 
    select count(*) into v_num_registros from ventas_final;
    IF v_num_registros > 0 THEN
-     DBMS_OUTPUT.PUT_LINE('⚠️​ La Tabla de Destino está llena ⚠️​. Ejecutando operación previa de borrado.');
+     DBMS_OUTPUT.PUT_LINE('??? La Tabla de Destino está llena ???. Ejecutando operación previa de borrado.');
     delete from ventas_final;
     ELSE
-    DBMS_OUTPUT.PUT_LINE('⚠️​ La Tabla de Destino está vacía ⚠️​. Omitiendo operación previa de borrado.');
+    DBMS_OUTPUT.PUT_LINE('??? La Tabla de Destino está vacía ???. Omitiendo operación previa de borrado.');
    END IF;
 
     DBMS_OUTPUT.PUT_LINE('');
@@ -159,9 +166,9 @@ BEGIN
      VENTAS_ART(i).artista_id, VENTAS_ART(i).monto, 
      VENTAS_ART(i).pais_origen, v_categoría);
      
-     -- Si este proceso no generó ningún error, guardo los cambios:
+     -- Si este proceso no genero ningún error, guardo los cambios:
       COMMIT;
-     -- En caso de error, lo manejo con una excepción que revierta los cambios y registre el error: 
+     -- En caso de error, manejarlo con una excepción que revierta los cambios y registre el error: 
       EXCEPTION
             WHEN OTHERS THEN
                 -- En caso de error, se revierte el proceso de nuevo desde el SAVEPOINT:
@@ -172,11 +179,30 @@ BEGIN
     
     -- Evaluar si surgió algún error durante el proceso, e imprimir un mensaje indicándolo:
       IF v_error THEN
-        DBMS_OUTPUT.PUT_LINE('❌​ Surgió un error en alguna iteración del bucle.');
+        DBMS_OUTPUT.PUT_LINE('?? Surgió un error en alguna iteración del bucle.');
         ELSE
-        DBMS_OUTPUT.PUT_LINE('​✅​ El proceso se completó de forma correcta.');
+        DBMS_OUTPUT.PUT_LINE('??? El proceso se completó de forma correcta.');
       END IF; 
 END;
+END; 
 
--- Mostrar el contenido cargado en la Tabla de Destino:
- select * from ventas_final;
+/* Finalmente programo la tarea usando 'DBMS_SCHEDULER.CREATE_JOB', llamando al procedimiento run_etl_process(), 
+  para que se ejecuta todos los días a las 18:30 */
+BEGIN
+    DBMS_SCHEDULER.CREATE_JOB(
+        job_name        => 'RUN_ETL_JOB',
+        job_type        => 'PLSQL_BLOCK',
+        job_action      => 'BEGIN run_etl_process(); END;',
+        start_date      => SYSDATE,
+        repeat_interval => 'FREQ=DAILY; BYHOUR=18; BYMINUTE=30; BYSECOND=0',
+        enabled         => TRUE
+    );
+END;
+
+-- Haciendo uso de esta consulta se podrá obtener información detallada acerca del Job:
+SELECT * FROM user_scheduler_jobs WHERE job_name = 'RUN_ETL_JOB';
+
+-- Si se desea eliminar el Job se puede ejecutar simplemente este bloque:
+BEGIN
+   DBMS_SCHEDULER.DROP_JOB(job_name => 'RUN_ETL_JOB');
+END;
