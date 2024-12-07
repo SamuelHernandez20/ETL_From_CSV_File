@@ -150,10 +150,10 @@ BEGIN
    select count(*) into v_num_registros from ventas_final;
    
    IF v_num_registros > 0 THEN
-     DBMS_OUTPUT.PUT_LINE('??? La Tabla de Destino está llena ???. Ejecutando operación previa de borrado.');
+     DBMS_OUTPUT.PUT_LINE('⚠️ La Tabla de Destino está llena ⚠️. Ejecutando operación previa de borrado.');
     delete from ventas_final;
     ELSE
-    DBMS_OUTPUT.PUT_LINE('??? La Tabla de Destino está vacía ???. Omitiendo operación previa de borrado.');
+    DBMS_OUTPUT.PUT_LINE('⚠️ La Tabla de Destino está vacía ⚠️. Omitiendo operación previa de borrado.');
    END IF;
 
     DBMS_OUTPUT.PUT_LINE('');
@@ -170,7 +170,7 @@ BEGIN
     v_resultado_entre_2 := v_división_registros_entre_2;
     
     RANGO_1 := v_num_registros >= 1000 AND v_num_registros <= 10000;
-    RANGO_2 := v_num_registros >= 100 AND v_num_registros <= 500;
+    RANGO_2 := v_num_registros >= 100 AND v_num_registros <= 999;
     
 -- Para este caso particular usaré el bucle FOR en lugar de FORALL, debido a que hay operaciones más complejas:
     FOR i IN 1..VENTAS_ART.COUNT LOOP
@@ -240,10 +240,10 @@ BEGIN
     -- Evaluar si surgió algún error durante el proceso, e imprimir un mensaje indicándolo:
       IF v_error THEN
         DBMS_OUTPUT.PUT_LINE('');
-        DBMS_OUTPUT.PUT_LINE('?? Surgió un error en alguna iteración del bucle.');
+        DBMS_OUTPUT.PUT_LINE('❌ Surgió un error en alguna iteración del bucle.');
         ELSE
         DBMS_OUTPUT.PUT_LINE('');
-        DBMS_OUTPUT.PUT_LINE('??? El proceso se completó de forma correcta.');
+        DBMS_OUTPUT.PUT_LINE('✅ El proceso se completó de forma correcta.');
       END IF; 
 END;
 END; 
