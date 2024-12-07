@@ -121,11 +121,25 @@ DECLARE
 -- Colección para la extracción de los datos la External Table:
    TYPE ventas_artistas IS TABLE OF ventas_ext%rowtype INDEX BY PLS_INTEGER;
    
--- Declaración de Variables:
+-- Bloque de Declaración de Variables y Constantes:
    VENTAS_ART ventas_artistas;
    v_categoría VARCHAR2(20);
    v_error BOOLEAN := FALSE;
-   v_num_registros NUMBER;
+   
+   v_num_registros NUMBER := 0;
+   v_contador_commit NUMBER := 0;
+   v_num_commit NUMBER := 0;
+   v_división_registros_entre_2 NUMBER;
+   v_resultado_entre_2 NUMBER;
+   v_división_registros_entre_4 NUMBER;
+   v_resultado_entre_4 NUMBER;
+   v_contador_commit_valor NUMBER := 0;
+   
+   RANGO_1 BOOLEAN := FALSE;
+   RANGO_2 BOOLEAN := FALSE;
+   CUATRO_COMMITS BOOLEAN := FALSE;
+   DOS_COMMITS BOOLEAN := FALSE;
+   
    
 BEGIN
 -- Extracción de los datos de la colección "ventas_artistas":
@@ -133,8 +147,8 @@ BEGIN
    
 -- Borrado previo de la tabla:
    DBMS_OUTPUT.PUT_LINE('## Borrado Previo de la Tabla de Destino: ' || '"ventas_final" ##');
-
    select count(*) into v_num_registros from ventas_final;
+   
    IF v_num_registros > 0 THEN
      DBMS_OUTPUT.PUT_LINE('??? La Tabla de Destino está llena ???. Ejecutando operación previa de borrado.');
     delete from ventas_final;
@@ -144,13 +158,26 @@ BEGIN
 
     DBMS_OUTPUT.PUT_LINE('');
     DBMS_OUTPUT.PUT_LINE('## Transformación y Carga de los datos en la Tabla de Destino: ' || '"ventas_final" ##');
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('Información sobre los COMMITS realizados');
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('---------------------------------------------------------------------');
+    
+    v_división_registros_entre_4 := v_num_registros / 4; --> En este caso 250, porque son 1000 registros totales. 
+    v_división_registros_entre_2 := v_num_registros / 2;
+    
+    v_resultado_entre_4 := v_división_registros_entre_4;
+    v_resultado_entre_2 := v_división_registros_entre_2;
+    
+    RANGO_1 := v_num_registros >= 1000 AND v_num_registros <= 10000;
+    RANGO_2 := v_num_registros >= 100 AND v_num_registros <= 500;
     
 -- Para este caso particular usaré el bucle FOR en lugar de FORALL, debido a que hay operaciones más complejas:
     FOR i IN 1..VENTAS_ART.COUNT LOOP
       
     -- Establecer un SAVEPOINT para revertir los cambios en caso de error:
        SAVEPOINT iteracion_inicio;
-    BEGIN
+       BEGIN
       -- 1. Transformar al tipo de datos correcto (NUMBER & DATE):
       format_data(VENTAS_ART(i).ventas_id, VENTAS_ART(i).fecha, VENTAS_ART(i).artista_id, VENTAS_ART(i).monto); 
       
@@ -166,21 +193,56 @@ BEGIN
      VENTAS_ART(i).artista_id, VENTAS_ART(i).monto, 
      VENTAS_ART(i).pais_origen, v_categoría);
      
-     -- Si este proceso no genero ningún error, guardo los cambios:
-      COMMIT;
+    /* Para evitar hacer un COMMIT por cada iteración (serían 1000 COMMITS), evaluo dinámicamente según el número de registros
+       existentes, cada cuántos registros hacerlo: */
+     v_contador_commit := v_contador_commit + i;
+   
+     CUATRO_COMMITS := v_contador_commit = v_división_registros_entre_4;
+     DOS_COMMITS := v_contador_commit = v_división_registros_entre_2;
+     
+ IF RANGO_1 OR RANGO_2 THEN 
+ 
+    IF RANGO_1 AND CUATRO_COMMITS THEN
+    -- Si este proceso no genero ningún error, guardo los cambios:
+    COMMIT;
+    v_contador_commit_valor := v_contador_commit;
+    v_división_registros_entre_4 := v_división_registros_entre_4 + v_resultado_entre_4;
+    v_num_commit := v_num_commit + 1;
+    DBMS_OUTPUT.PUT_LINE('COMMIT ' || v_num_commit || ' ITERACIÓN: ' || v_contador_commit_valor);
+    
+   ELSIF RANGO_2 AND DOS_COMMITS THEN
+   -- Si este proceso no genero ningún error, guardo los cambios:
+    COMMIT;
+    v_contador_commit_valor := v_contador_commit;
+    v_división_registros_entre_2 := v_división_registros_entre_2 + v_resultado_entre_2;
+    v_num_commit := v_num_commit + 1;
+    DBMS_OUTPUT.PUT_LINE('COMMIT ' || v_num_commit || ' ITERACIÓN: ' || v_contador_commit_valor);
+    
+   ELSE
+   v_contador_commit := 0;
+   v_num_commit := v_num_commit;     
+   END IF; 
+
+ END IF;  
+ 
      -- En caso de error, manejarlo con una excepción que revierta los cambios y registre el error: 
       EXCEPTION
-            WHEN OTHERS THEN
+        WHEN OTHERS THEN
                 -- En caso de error, se revierte el proceso de nuevo desde el SAVEPOINT:
                 ROLLBACK TO SAVEPOINT iteracion_inicio;
-                v_error := TRUE;     
-    END;
+                v_error := TRUE;
+                v_contador_commit := 0;
+                v_num_commit := 0;  
+    END; 
     END LOOP;
+    DBMS_OUTPUT.PUT_LINE('---------------------------------------------------------------------');
     
     -- Evaluar si surgió algún error durante el proceso, e imprimir un mensaje indicándolo:
       IF v_error THEN
+        DBMS_OUTPUT.PUT_LINE('');
         DBMS_OUTPUT.PUT_LINE('?? Surgió un error en alguna iteración del bucle.');
         ELSE
+        DBMS_OUTPUT.PUT_LINE('');
         DBMS_OUTPUT.PUT_LINE('??? El proceso se completó de forma correcta.');
       END IF; 
 END;
@@ -188,6 +250,7 @@ END;
 
 /* Finalmente programo la tarea usando 'DBMS_SCHEDULER.CREATE_JOB', llamando al procedimiento run_etl_process(), 
   para que se ejecuta todos los días a las 18:30 */
+  
 BEGIN
     DBMS_SCHEDULER.CREATE_JOB(
         job_name        => 'RUN_ETL_JOB',
@@ -199,7 +262,7 @@ BEGIN
     );
 END;
 
--- Haciendo uso de esta consulta se podrá obtener información detallada acerca del Job:
+-- Haciendo uso de esta consulta se podrá obtener información detallada acerca del Job */
 SELECT * FROM user_scheduler_jobs WHERE job_name = 'RUN_ETL_JOB';
 
 -- Si se desea eliminar el Job se puede ejecutar simplemente este bloque:
