@@ -85,6 +85,7 @@ END;
 
 /* Segundo Procedimiento Almacenado: Manejo de Valores Negativos y Positivos
    del monto. */
+
 create or replace procedure adjust_amount (p_monto IN OUT NUMBER)   
 as
 BEGIN
@@ -160,7 +161,7 @@ BEGIN
    select count(*) into v_num_registros from ventas_final;
    
    IF v_num_registros > 0 THEN
-     DBMS_OUTPUT.PUT_LINE('??? La Tabla de Destino está llena ???. Ejecutando operación previa de borrado.');
+     DBMS_OUTPUT.PUT_LINE('La Tabla de Destino está llena. Ejecutando operación previa de borrado.');
     delete from ventas_final;
     ELSE
     DBMS_OUTPUT.PUT_LINE('??? La Tabla de Destino está vacía ???. Omitiendo operación previa de borrado.');
@@ -173,7 +174,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('');
     DBMS_OUTPUT.PUT_LINE('---------------------------------------------------------------------');
     
-    v_división_registros_entre_4 := v_num_registros / 4; --> En este caso 250, porque son 1000 registros totales. 
+    v_división_registros_entre_4 := v_num_registros / 4;
     v_división_registros_entre_2 := v_num_registros / 2;
     
     v_resultado_entre_4 := v_división_registros_entre_4;
@@ -192,7 +193,7 @@ BEGIN
       format_data(VENTAS_ART(i).ventas_id, VENTAS_ART(i).fecha, VENTAS_ART(i).artista_id, VENTAS_ART(i).monto); 
       
       -- 2. Ajustar el Monto (reemplazar valores negativos por el valor 0):
-      adjust_amount (VENTAS_ART(i).monto);
+     adjust_amount (VENTAS_ART(i).monto);
       
       -- 3. Asignación de la categoría 'Internacional' o 'Nacional' según corresponda:
       international_category(VENTAS_ART(i).pais_origen, v_categoría);
@@ -234,7 +235,7 @@ BEGIN
    END IF; 
 
  END IF;  
- 
+
      -- En caso de error, manejarlo con una excepción que revierta los cambios y registre el error: 
       EXCEPTION
         WHEN OTHERS THEN
@@ -250,19 +251,21 @@ BEGIN
     -- Evaluar si surgió algún error durante el proceso, e imprimir un mensaje indicándolo:
       IF v_error THEN
         DBMS_OUTPUT.PUT_LINE('');
-        DBMS_OUTPUT.PUT_LINE('?? Surgió un error en alguna iteración del bucle.');
+        DBMS_OUTPUT.PUT_LINE('Surgió un error en alguna iteración del bucle.');
         ELSE
         DBMS_OUTPUT.PUT_LINE('');
-        DBMS_OUTPUT.PUT_LINE('??? El proceso se completó de forma correcta.');
+        DBMS_OUTPUT.PUT_LINE('El proceso se completó de forma correcta.');
       END IF; 
 END;
 END; 
 
-
-/* Genero un nuevo archivo CSV llamado: 'ventas_formateado.csv' con la información 
-   actualizada de la tabla: 'ventas_final'.
+/* Encapsulo en un procedimiento almacenado la generación 
+   de un nuevo archivo CSV llamado: 'ventas_formateado.csv' con la información 
+   limpiada de la tabla: 'ventas_final'.
 */
 
+CREATE OR REPLACE PROCEDURE ExportFormatDataToNew_CSV_File 
+IS
 DECLARE
 ARCHIVO_VENTAS_FORMATEADO UTL_FILE.FILE_TYPE;
 BEGIN
@@ -274,32 +277,44 @@ LOOP
 END LOOP;
 UTL_FILE.PUT (ARCHIVO_VENTAS_FORMATEADO, CHR(10));
 
-FOR i in (select * from ventas_final)
+FOR i in (select * from ventas_final order by artista_id asc)
 LOOP
  UTL_FILE.PUT_LINE (ARCHIVO_VENTAS_FORMATEADO, i.VENTAS_FINAL_ID||','||i.FECHA||','||i.ARTISTA_ID||','||i.MONTO
                     ||','||i.PAIS_ORIGEN||','||i.CATEGORIA);
 END LOOP;
 UTL_FILE.FCLOSE(ARCHIVO_VENTAS_FORMATEADO);
 END;
+/
 
-/* Finalmente programo la tarea usando 'DBMS_SCHEDULER.CREATE_JOB', llamando al procedimiento run_etl_process(), 
-  para que se ejecuta todos los días a las 18:30 */
+/* Finalmente programo la tarea usando 'DBMS_SCHEDULER.CREATE_JOB', 
+   donde llamo al procedimiento: 'run_etl_process()' y 'ExportFormatDataToNew_CSV_File()'
+   para automatizar el proceso ETL y la exportación de datos al nuevo archivo CSV.
+   Se ejecuta a diario sobre las 18:30. */
   
 BEGIN
     DBMS_SCHEDULER.CREATE_JOB(
-        job_name        => 'RUN_ETL_JOB',
+        job_name        => 'RUN_ETL_JOB_AND_EXPORT_FORMAT_DATA',
         job_type        => 'PLSQL_BLOCK',
-        job_action      => 'BEGIN run_etl_process(); END;',
+        job_action      => 'BEGIN run_etl_process(); ExportFormatDataToNew_CSV_File(); END;',
         start_date      => SYSDATE,
         repeat_interval => 'FREQ=DAILY; BYHOUR=18; BYMINUTE=30; BYSECOND=0',
         enabled         => TRUE);
+        
 END;
 
 -- Haciendo uso de esta consulta se podrá obtener información detallada acerca del Job */
-SELECT * FROM user_scheduler_jobs WHERE job_name = 'RUN_ETL_JOB';
+SELECT * FROM user_scheduler_jobs WHERE job_name = 'RUN_ETL_JOB_AND_EXPORT_FORMAT_DATA';
 
--- Si se desea eliminar el Job se puede ejecutar simplemente este bloque:
+
+-------------------------- Comandos Adicionales ----------------------------
+-- Para Ejecutar manualmente el Job:
 BEGIN
-   DBMS_SCHEDULER.DROP_JOB(job_name => 'RUN_ETL_JOB');
+   DBMS_SCHEDULER.RUN_JOB(job_name => 'RUN_ETL_JOB_AND_EXPORT_FORMAT_DATA');
 END;
 /
+-- Para Eliminar manualmente el Job:
+BEGIN
+   DBMS_SCHEDULER.DROP_JOB(job_name => 'RUN_ETL_JOB_AND_EXPORT_FORMAT_DATA');
+END;
+/
+----------------------------------------------------------------------------
