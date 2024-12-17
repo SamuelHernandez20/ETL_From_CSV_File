@@ -1,3 +1,4 @@
 # ETL_From_CSV_File
-En este repositorio comparto un código escrito en PL/SQL dónde realizo un flujo básico de: **Extracción**, **Transformación** y **Carga de Datos** procedentes de un archivo CSV (*ventas.csv*) en una Tabla de Destino. 
-Y también se exporta a un nuevo archivo csv (*ventas_formateado.csv*) la información tratada. [En Proceso].
+Pequeño proyecto desarrollado en el lenguaje procedural **PL/SQL**. Consiste en un proceso de **extracción**, **transformación** y **carga de datos** de un **archivo CSV** y la **exportación automatizada** de la
+información transformada a un **nuevo archivo CSV**.
+
