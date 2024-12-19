@@ -3,11 +3,11 @@ Pequeño proyecto desarrollado en el lenguaje procedural **PL/SQL**. Consiste en
 información transformada a un **nuevo archivo CSV**.
 
 ### Objetives:
-1. Extraer datos desde un archivo CSV con información sucia usando External Table.
+1. Extraer los datos en crudo desde un archivo CSV. Usando `External Table`.
 2. Realizar las transformaciones necesarias sobre los datos extraídos.
 3. Manejo de posibles errores y transacciones.
 4. Carga de los datos formateados en una tabla de destino.
-5. 
+5. Exportar los datos cargados en la tabla de destino en un nuevo archivo CSV. Usando `UTL_FILE`.
 
 ### Initial Settings:
 
