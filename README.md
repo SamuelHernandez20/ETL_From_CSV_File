@@ -1,4 +1,4 @@
-## ETL process from a CSV file with PL/SQL.
+## - ETL process from a CSV file with PL/SQL.
 
 (here goes the image).
 
