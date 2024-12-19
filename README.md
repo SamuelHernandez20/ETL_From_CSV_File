@@ -13,7 +13,7 @@ information transformed to a **new CSV file**.
 6. **Automate** the entire process with the help of: `DBMS_SCHEDULER.`
 
 ## ⚙ Initial Settings:
-1. Create a new folder where the CSV file from which data extraction will be performed will be hosted on this route:
+1. Create a new folder where the CSV file will be housed, in the following path:
    
 ```
 C:\app\SYSTEM_USER\product\21c\admin\xe\YOUR_NEW_FOLDER
@@ -23,5 +23,6 @@ C:\app\SYSTEM_USER\product\21c\admin\xe\YOUR_NEW_FOLDER
 ```
 CREATE OR REPLACE DIRECTORY YOUR_NEW_FOLDER_ALIAS AS 'C:\app\SYSTEM_USER\product\21c\admin\xe\YOUR_NEW_FOLDER';
 ```
+3. Tras ello será importante asignar los permisos adecuados al usuario para dicho directorio:
 
 
