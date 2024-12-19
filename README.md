@@ -1,8 +1,8 @@
 ## ETL process from a CSV file with PL/SQL.
 
 ## 📝 Description:
-Pequeño proyecto desarrollado en el lenguaje procedural **PL/SQL**. Consiste en un proceso de **extracción**, **transformación** y **carga de datos** de un **archivo CSV** y la **exportación automatizada** de la
-información transformada a un **nuevo archivo CSV**.
+Small project developed in the **PL/SQL** procedural language. It consists of a process of **extraction**, **transformation** and **data loading** of a **CSV file** and the **automated export** of the
+information transformed to a **new CSV file**.
 
 ### 🎯 Objetives:
 1. **Extraer** los datos en crudo desde un **archivo CSV**, haciendo uso de: `External Table.`
