@@ -9,6 +9,6 @@ información transformada a un **nuevo archivo CSV**.
 4. Carga de los datos formateados en una tabla de destino.
 5. 
 
-### Configuraciones Iniciales:
+### Initial Settings:
 
 
