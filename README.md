@@ -21,10 +21,10 @@ C:\app\SYSTEM_USER\product\21c\admin\xe\YOUR_NEW_FOLDER
 ```
 CREATE OR REPLACE DIRECTORY YOUR_NEW_FOLDER_ALIAS AS 'C:\app\SYSTEM_USER\product\21c\admin\xe\YOUR_NEW_FOLDER';
 ```
-3. After that, it will be important to assign the appropriate directory permissions:
+3. After that, it will be important to assign the appropriate directory permissions and move the CSV file to the create folder:
 ```
 GRANT READ, WRITE ON DIRECTORY YOUR_NEW_FOLDER_ALIAS TO YOUR_ORACLE_USER;
 ```
-Then move the CSV file to the create folder.
+
 
 
