@@ -9,7 +9,7 @@ information transformed to a **new CSV file**.
 
 ### 🛠️ Environment & Version:
 - **Language**: PL/SQL.
-- **Database**: Oracle Database 21c
+- **Database**: Oracle Database 21c.
 - **Tools/Technologies Used**:
   - `External Tables.`
   - `UTL_FILE.`
