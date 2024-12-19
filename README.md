@@ -7,7 +7,7 @@
 Small project developed in the **PL/SQL** procedural language. It consists of a process of **extraction**, **transformation** and **data loading** of a **CSV file** and the **automated export** of the
 information transformed to a **new CSV file**.
 
-## 🛠️ Environment & Version:
+### 🛠️ Environment & Version:
 - **Language**: PL/SQL.
 - **Database**: Oracle Database 21c
 - **Tools/Technologies Used**:
