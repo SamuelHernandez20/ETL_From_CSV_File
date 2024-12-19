@@ -11,9 +11,11 @@ information transformed to a **new CSV file**.
 - **Language**: PL/SQL.
 - **Database**: Oracle Database 21c.
 - **Tools/Technologies Used**:
+  
   - `External Tables.`
   - `UTL_FILE.`
   - `DBMS_SCHEDULER.`
+    
 - **Operating System**: Windows 10.
 - **IDE**: Oracle SQL Developer.
 
