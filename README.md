@@ -13,6 +13,7 @@ information transformed to a **new CSV file**.
 - **Tools/Technologies Used**:
   
   - `External Tables.`
+  - `Bulk Collect.`
   - `UTL_FILE.`
   - `DBMS_SCHEDULER.`
     
