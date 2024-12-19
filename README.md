@@ -1,4 +1,4 @@
-## ETL process from a CSV file with PL/SQL.
+## Documentation of the ETL Process from a CSV file with PL/SQL.
 
 ![](ETL/Images/ETL_Process_Diagram_.png)
 
