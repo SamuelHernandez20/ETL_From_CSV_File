@@ -1,7 +1,6 @@
 ## ETL process from a CSV file with PL/SQL.
 
-![](images/ETL_Process_Diagram.png)
-
+![](Images/ETL_Process_Diagram.png)
 
 ### 📝 Description:
 Small project developed in the **PL/SQL** procedural language. It consists of a process of **extraction**, **transformation** and **data loading** of a **CSV file** and the **automated export** of the
