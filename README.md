@@ -18,5 +18,10 @@ information transformed to a **new CSV file**.
 ```
 C:\app\SYSTEM_USER\product\21c\admin\xe\YOUR_NEW_FOLDER
 ```
+2. Then, I will register the directory in Oracle using the following command:
+   
+```
+CREATE OR REPLACE DIRECTORY YOUR_NEW_FOLDER`_NAME AS 'C:\app\SYSTEM_USER\product\21c\admin\xe\YOUR_NEW_FOLDER';
+```
 
 
