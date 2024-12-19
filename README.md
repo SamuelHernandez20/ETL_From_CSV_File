@@ -1,6 +1,5 @@
 ## ETL process from a CSV file with PL/SQL.
 
-## 📊 Project Overview:
 (here goes the image).
 
 
