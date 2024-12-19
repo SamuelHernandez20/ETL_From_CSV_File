@@ -7,7 +7,8 @@ información transformada a un **nuevo archivo CSV**.
 2. Realizar las transformaciones necesarias sobre los datos extraídos.
 3. Manejo de posibles errores y transacciones.
 4. Carga de los datos formateados en una tabla de destino.
-5. Exportar los datos cargados en la tabla de destino en un nuevo archivo CSV. Usando: `UTL_FILE`.
+5. Exportar los datos cargados en la tabla de destino en un nuevo archivo CSV. Haciendo uso de: `UTL_FILE`.
+6. Automatizar todo el proceso. Mediante: `DBMS_SCHEDULER `.
 
 ### Initial Settings:
 
