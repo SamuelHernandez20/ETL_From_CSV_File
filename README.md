@@ -5,12 +5,12 @@ Small project developed in the **PL/SQL** procedural language. It consists of a 
 information transformed to a **new CSV file**.
 
 ### 🎯 Objetives:
-1. **Extraer** los datos en crudo desde un **archivo CSV**, haciendo uso de: `External Table.`
-2. Realizar las **transformaciones** necesarias sobre los datos extraídos.
-3. Manejo de posibles **errores** y **transacciones**.
-4. **Carga** de los datos formateados en una **tabla de destino**.
-5. **Exportar** los datos cargados en la tabla de destino en un **nuevo archivo CSV**, mediante: `UTL_FILE.`
-6. **Automatizar** todo el proceso con la ayuda de: `DBMS_SCHEDULER.`
+1. **Extract** the raw data from a **CSV file**, using: `External Table.`
+2. Perform the necessary **transformations** on the extracted data.
+3. Handling of possible **errors** and **transactions**.
+4. **Load** the formatted data into a **destination table**.
+5. **Export** the data loaded in the destination table in a **new CSV file**, using: `UTL_FILE.`
+6. **Automate** the entire process with the help of: `DBMS_SCHEDULER.`
 
 ## ⚙ Initial Settings:
 
