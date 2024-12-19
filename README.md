@@ -1,6 +1,6 @@
 ## ETL process from a CSV file with PL/SQL.
 
-![](images/Diagrama.png)
+![](images/ETL_Process_Diagram.png)
 
 
 ### 📝 Description:
