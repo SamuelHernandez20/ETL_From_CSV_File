@@ -15,8 +15,8 @@ information transformed to a **new CSV file**.
 ## ⚙ Initial Settings:
 1. Create a new folder where the CSV file from which data extraction will be performed will be hosted on this route:
    
-``
-'C:\app\SYSTEM_USER\product\21c\admin\xe\YOUR_NEW_FOLDER'
-``
+```
+C:\app\SYSTEM_USER\product\21c\admin\xe\YOUR_NEW_FOLDER
+```
 
 
