@@ -30,15 +30,15 @@ information transformed to a **new CSV file**.
 
 ## ⚙ Initial Settings:
 1. Create a new folder where the CSV file will be housed, in the following path:
-```
-C:\app\SYSTEM_USER\product\21c\admin\xe\YOUR_NEW_FOLDER
-```
+   
+- `C:\app\SYSTEM_USER\product\21c\admin\xe\YOUR_NEW_FOLDER`
+
 2. Then, I will register the directory in Oracle using the following command:
-```
+```sql
 CREATE OR REPLACE DIRECTORY YOUR_NEW_FOLDER_ALIAS AS 'C:\app\SYSTEM_USER\product\21c\admin\xe\YOUR_NEW_FOLDER';
 ```
 3. After that, it will be important to assign the appropriate directory permissions and move the CSV file to the create folder:
-```
+```sql
 GRANT READ, WRITE ON DIRECTORY YOUR_NEW_FOLDER_ALIAS TO YOUR_ORACLE_USER;
 ```
 4. Verify that the directory has been registered correctly:
