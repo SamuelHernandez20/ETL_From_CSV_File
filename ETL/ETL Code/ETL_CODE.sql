@@ -1,4 +1,3 @@
--- Creación de la "External Table" para el archivo "ventas.csv": 
 CREATE TABLE ventas_ext
 (
 ventas_id NUMBER(4),
@@ -28,7 +27,7 @@ ORGANIZATION EXTERNAL
 )
 REJECT LIMIT UNLIMITED;
 
--- Creación de la Tabla de Destino 'ventas_final':
+
 CREATE TABLE ventas_final(
     ventas_final_id NUMBER PRIMARY KEY,
     fecha DATE,
@@ -38,26 +37,26 @@ CREATE TABLE ventas_final(
     categoria VARCHAR2(20) 
 )
 
--- Evitar el error ORA-10027 (desbordamiento de buffer):
+
 EXECUTE dbms_session.reset_package;
 SET SERVEROUTPUT ON SIZE UNLIMITED
 EXECUTE sys.dbms_output.enable(NULL);
 CLEAR SCREEN
 
--- Realizo una consulta simple para comprobar la información de la Tabla Externa
-   select * from ventas_ext;
+ 
+select * from ventas_ext;
    
--- Mediante esta consulta se puede ver la información de la Tabla Externa con más detalle:   
-   SELECT column_name, data_type, data_length, data_precision, data_scale
-   FROM user_tab_columns
-   WHERE table_name = 'VENTAS_EXT';
+ 
+SELECT column_name, data_type, data_length, data_precision, data_scale
+FROM user_tab_columns
+WHERE table_name = 'VENTAS_EXT';
    
--- Primer Procedimiento Almacenado: Convertir las el tipo CHAR de "fecha" a DATE:
+
 create or replace procedure format_data (
-    p_ventas_id_sin_convertir IN OUT ventas_ext.ventas_id%type,
-    p_cadena_fecha_sin_convertir IN OUT ventas_ext.fecha%type,
-    p_artista_id_sin_convertir IN OUT ventas_ext.artista_id%type,
-    p_monto_sin_convertir IN OUT ventas_ext.monto%type)   
+   p_ventas_id_sin_convertir IN OUT ventas_ext.ventas_id%type,
+   p_cadena_fecha_sin_convertir IN OUT ventas_ext.fecha%type,
+   p_artista_id_sin_convertir IN OUT ventas_ext.artista_id%type,
+   p_monto_sin_convertir IN OUT ventas_ext.monto%type)   
 as
 -- Declaración de la constante para la condición:
  v_condicion CONSTANT BOOLEAN :=
@@ -68,38 +67,29 @@ as
 
 BEGIN
     IF v_condicion THEN
-    -- Convertir el 'id_ventas' de tipo CHAR a tipo NUMBER:
+    
       p_ventas_id_sin_convertir := TO_NUMBER(p_ventas_id_sin_convertir);
       
-    -- Convertir la 'fecha' de tipo CHAR a tipo DATE:
       p_cadena_fecha_sin_convertir := TO_DATE(p_cadena_fecha_sin_convertir, 'YYYY-MM-DD');
 
-    -- Convertir el 'artista_id' de tipo CHAR a tipo NUMBER:
       p_artista_id_sin_convertir := TO_NUMBER(p_artista_id_sin_convertir);
       
-    -- Convertir el 'monto' de tipo CHAR a tipo NUMBER:
       p_monto_sin_convertir := TO_NUMBER(p_monto_sin_convertir);
     END IF;
 END;
 /
 
-/* Segundo Procedimiento Almacenado: Manejo de Valores Negativos y Positivos
-   del monto. */
-
 create or replace procedure adjust_amount (p_monto IN OUT NUMBER)   
 as
 BEGIN
--- Elimino posibles valores decimales desde el principio:
  p_monto := trunc(p_monto,0);
  
--- Manejo de Valores Negativos:
 IF p_monto < -999999 THEN
  p_monto := 0;
 ELSIF p_monto >= -999999 AND p_monto <= -1 THEN
- p_monto := ABS(p_monto); -- Conversión a Número Positivo.
+ p_monto := ABS(p_monto);
 END IF;
 
--- Manejo de Valores Positivos:
 IF p_monto > 999999 THEN
  p_monto := 999999;
 END IF;
@@ -107,7 +97,6 @@ END IF;
 END; 
 /
 
--- Tercer Procedimiento Almacenado: Asignación de Categoría 'Internacional' o 'Nacional':
 create or replace procedure international_category (p_pais_origen VARCHAR2, p_categoria OUT VARCHAR2)   
 as
 v_categoría_internacional VARCHAR2(20) := 'Internacional';
@@ -121,9 +110,6 @@ BEGIN
  END IF;
 END;
 /
-
-/* Encapsulo toda la lógica en un procedimiento general: 'run_etl_process'. 
-   Para luego automatizar el proceso usando: 'DBMS_SCHEDULER.CREATE_JOB'. */
 
 CREATE OR REPLACE PROCEDURE run_etl_process 
 IS
@@ -153,10 +139,9 @@ DECLARE
    DOS_COMMITS BOOLEAN := FALSE;
    
 BEGIN
--- Extracción de los datos de la colección "ventas_artistas":
+ 
    SELECT * BULK COLLECT INTO VENTAS_ART FROM ventas_ext;
    
--- Borrado previo de la tabla:
    DBMS_OUTPUT.PUT_LINE('## Borrado Previo de la Tabla de Destino: ' || '"ventas_final" ##');
    select count(*) into v_num_registros from ventas_final;
    
@@ -182,30 +167,24 @@ BEGIN
     
     RANGO_1 := v_num_registros >= 1000 AND v_num_registros <= 10000;
     RANGO_2 := v_num_registros >= 100 AND v_num_registros <= 999;
-    
--- Para este caso particular usaré el bucle FOR en lugar de FORALL, debido a que hay operaciones más complejas:
+
+
     FOR i IN 1..VENTAS_ART.COUNT LOOP
       
-    -- Establecer un SAVEPOINT para revertir los cambios en caso de error:
        SAVEPOINT iteracion_inicio;
        BEGIN
-      -- 1. Transformar al tipo de datos correcto (NUMBER & DATE):
+      
       format_data(VENTAS_ART(i).ventas_id, VENTAS_ART(i).fecha, VENTAS_ART(i).artista_id, VENTAS_ART(i).monto); 
       
-      -- 2. Ajustar el Monto (reemplazar valores negativos por el valor 0):
-     adjust_amount (VENTAS_ART(i).monto);
+      adjust_amount (VENTAS_ART(i).monto);
       
-      -- 3. Asignación de la categoría 'Internacional' o 'Nacional' según corresponda:
       international_category(VENTAS_ART(i).pais_origen, v_categoría);
       
-      -- 4. Carga de datos en la Tabla de Destino: 'ventas_final':
      INSERT INTO ventas_final VALUES(
      VENTAS_ART(i).ventas_id, VENTAS_ART(i).fecha, 
      VENTAS_ART(i).artista_id, VENTAS_ART(i).monto, 
      VENTAS_ART(i).pais_origen, v_categoría);
      
-    /* Para evitar hacer un COMMIT por cada iteración (serían 1000 COMMITS), evaluo dinámicamente según el número de registros
-       existentes, cada cuántos registros hacerlo: */
      v_contador_commit := v_contador_commit + i;
    
      CUATRO_COMMITS := v_contador_commit = v_división_registros_entre_4;
@@ -214,7 +193,7 @@ BEGIN
  IF RANGO_1 OR RANGO_2 THEN 
  
     IF RANGO_1 AND CUATRO_COMMITS THEN
-    -- Si este proceso no genero ningún error, guardo los cambios:
+    
     COMMIT;
     v_contador_commit_valor := v_contador_commit;
     v_división_registros_entre_4 := v_división_registros_entre_4 + v_resultado_entre_4;
@@ -222,7 +201,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('COMMIT ' || v_num_commit || ' ITERACIÓN: ' || v_contador_commit_valor);
     
    ELSIF RANGO_2 AND DOS_COMMITS THEN
-   -- Si este proceso no genero ningún error, guardo los cambios:
+   
     COMMIT;
     v_contador_commit_valor := v_contador_commit;
     v_división_registros_entre_2 := v_división_registros_entre_2 + v_resultado_entre_2;
@@ -235,20 +214,17 @@ BEGIN
    END IF; 
 
  END IF;  
-
-     -- En caso de error, manejarlo con una excepción que revierta los cambios y registre el error: 
+ 
       EXCEPTION
         WHEN OTHERS THEN
-                -- En caso de error, se revierte el proceso de nuevo desde el SAVEPOINT:
                 ROLLBACK TO SAVEPOINT iteracion_inicio;
                 v_error := TRUE;
                 v_contador_commit := 0;
                 v_num_commit := 0;  
-    END; 
+      END; 
     END LOOP;
     DBMS_OUTPUT.PUT_LINE('---------------------------------------------------------------------');
     
-    -- Evaluar si surgió algún error durante el proceso, e imprimir un mensaje indicándolo:
       IF v_error THEN
         DBMS_OUTPUT.PUT_LINE('');
         DBMS_OUTPUT.PUT_LINE('Surgió un error en alguna iteración del bucle.');
@@ -258,11 +234,6 @@ BEGIN
       END IF; 
 END;
 END; 
-
-/* Encapsulo en un procedimiento almacenado la generación 
-   de un nuevo archivo CSV llamado: 'ventas_formateado.csv' con la información 
-   limpiada de la tabla: 'ventas_final'.
-*/
 
 CREATE OR REPLACE PROCEDURE ExportFormatDataToNew_CSV_File 
 IS
@@ -285,12 +256,7 @@ END LOOP;
 UTL_FILE.FCLOSE(ARCHIVO_VENTAS_FORMATEADO);
 END;
 /
-
-/* Finalmente programo la tarea usando 'DBMS_SCHEDULER.CREATE_JOB', 
-   donde llamo al procedimiento: 'run_etl_process()' y 'ExportFormatDataToNew_CSV_File()'
-   para automatizar el proceso ETL y la exportación de datos al nuevo archivo CSV.
-   Se ejecuta a diario sobre las 18:30. */
-  
+ 
 BEGIN
     DBMS_SCHEDULER.CREATE_JOB(
         job_name        => 'RUN_ETL_JOB_AND_EXPORT_FORMAT_DATA',
@@ -302,19 +268,4 @@ BEGIN
         
 END;
 
--- Haciendo uso de esta consulta se podrá obtener información detallada acerca del Job */
 SELECT * FROM user_scheduler_jobs WHERE job_name = 'RUN_ETL_JOB_AND_EXPORT_FORMAT_DATA';
-
-
--------------------------- Comandos Adicionales ----------------------------
--- Para Ejecutar manualmente el Job:
-BEGIN
-   DBMS_SCHEDULER.RUN_JOB(job_name => 'RUN_ETL_JOB_AND_EXPORT_FORMAT_DATA');
-END;
-/
--- Para Eliminar manualmente el Job:
-BEGIN
-   DBMS_SCHEDULER.DROP_JOB(job_name => 'RUN_ETL_JOB_AND_EXPORT_FORMAT_DATA');
-END;
-/
-----------------------------------------------------------------------------
