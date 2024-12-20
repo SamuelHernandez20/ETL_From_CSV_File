@@ -127,6 +127,46 @@ select * from ventas_ext;
 ```
 ### The three subprocedures of the code:
   - **Firts Subprocedure**: `format_data`.
+    
+1. I create and define procedure parameters.
+
+```sql   
+create or replace procedure format_data (
+    p_ventas_id_sin_convertir IN OUT ventas_ext.ventas_id%type,
+    p_cadena_fecha_sin_convertir IN OUT ventas_ext.fecha%type,
+    p_artista_id_sin_convertir IN OUT ventas_ext.artista_id%type,
+    p_monto_sin_convertir IN OUT ventas_ext.monto%type)   
+as
+```
+2. Here I am declaring the boolean constants that I will use in the IF condition.
+
+```sql   
+ v_condicion CONSTANT BOOLEAN :=
+ p_ventas_id_sin_convertir IS NOT NULL 
+ AND p_cadena_fecha_sin_convertir IS NOT NULL 
+ AND p_artista_id_sin_convertir IS NOT NULL
+ AND p_monto_sin_convertir IS NOT NULL;
+```
+3. In the body of the procedure I evaluate that no parameter is null, and if true, I report the data conversion.  
+
+```sql   
+BEGIN
+    IF v_condicion THEN
+    -- Convertir el 'id_ventas' de tipo CHAR a tipo NUMBER:
+      p_ventas_id_sin_convertir := TO_NUMBER(p_ventas_id_sin_convertir);
+      
+      p_cadena_fecha_sin_convertir := TO_DATE(p_cadena_fecha_sin_convertir, 'YYYY-MM-DD');
+
+      p_artista_id_sin_convertir := TO_NUMBER(p_artista_id_sin_convertir);
+
+      p_monto_sin_convertir := TO_NUMBER(p_monto_sin_convertir);
+    END IF;
+END;
+/
+```
+
+
+
   - **Second Subprocedure**: `adjust_mount`.
   - **third Subprocedure**: `international_category`.        
   
