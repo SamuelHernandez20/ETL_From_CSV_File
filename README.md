@@ -48,14 +48,14 @@ GRANT READ, WRITE ON DIRECTORY YOUR_NEW_FOLDER_ALIAS TO YOUR_ORACLE_USER;
 
 | Component | Name | function |
 |----------|----------|----------|
-|  External Table   |  |   |
-|  Destination Table   |  |   |
-| Sub-Procedure | *format_data* |    |
-| Sub-Procedure | *adjust_mount* |  |
-| Sub-Procedure | *international_category* |   |
-| Main Procedure | run_etl_process |   |
-| Procedure |ExportFormatD |   |
-| Job  | |   |
+| **External Table** | *ventas_ext*. |   |
+| **Destination Table** |  |   |
+| **Sub-Procedure** | *format_data*. |    |
+| **Sub-Procedure** | *adjust_mount*. |  |
+| **Sub-Procedure** | *international_category*. |   |
+| **Main Procedure** | *run_etl_process*. |   |
+| **Procedure** | *ExportFormatDataToNew_CSV_File*.  |   |
+| **Job** | *RUN_ETL_JOB_AND_EXPORT_FORMAT_DATA*. |   |
 
 
 
