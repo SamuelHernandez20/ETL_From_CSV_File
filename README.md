@@ -164,14 +164,22 @@ END;
 /
 ```
   - **Second Subprocedure**: `adjust_mount`.
-1. I create and define procedure parameters. **Remove possible decimal values** ​​from the beginning using: `trunc(arg1, integer)` in the input parameter: `p_monto`.  
+1. I create and define procedure parameters. **Remove possible decimal values** ​​from the beginning using: `trunc(arg1, integer)` in the in out parameter: `p_monto`.  
 
 ```sql   
 create or replace procedure adjust_amount (p_monto IN OUT NUMBER)   
 as
 BEGIN
--- Elimino posibles valores decimales desde el principio:
  p_monto := trunc(p_monto,0);
+```
+2. Then I handle possible negative values ​​first. Depending on its value, I assign a **default number**: `0`, or convert it to a **positive** number using: `abs(argument)`.
+
+```sql   
+IF p_monto < -999999 THEN
+ p_monto := 0;
+ELSIF p_monto >= -999999 AND p_monto <= -1 THEN
+ p_monto := ABS(p_monto); -- Conversión a Número Positivo.
+END IF;
 ```
 
 
