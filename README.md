@@ -46,7 +46,7 @@ GRANT READ, WRITE ON DIRECTORY YOUR_NEW_FOLDER_ALIAS TO YOUR_ORACLE_USER;
 ```
 ## 📋 Code Table of Contents:
 
-| Component | Name | function |
+| Component | Name | Function |
 |----------|----------|----------|
 | **External Table** | *ventas_ext*. | Load data from csv file. |
 | **Destination Table** | *ventas_final*. | Load the transformed data. |
