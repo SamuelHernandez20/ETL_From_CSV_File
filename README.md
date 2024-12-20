@@ -113,11 +113,18 @@ SET SERVEROUTPUT ON SIZE UNLIMITED
 EXECUTE sys.dbms_output.enable(NULL);
 CLEAR SCREEN
 ```
-4. Perform a simple query to check the information in the **External Table** 
+4. Perform a simple query to check the information in the **External Table**. 
  
 ```sql   
 select * from ventas_ext;
-```   
+```
+5. Using this query you can see the information of the **External Table** in more detail:
+   
+```sql   
+   SELECT column_name, data_type, data_length, data_precision, data_scale
+   FROM user_tab_columns
+   WHERE table_name = 'VENTAS_EXT';
+```    
   
 
 
