@@ -59,7 +59,7 @@ GRANT READ, WRITE ON DIRECTORY YOUR_NEW_FOLDER_ALIAS TO YOUR_ORACLE_USER;
 
 ## 💻 Code explanation:
 
-- External table and Destination table creation
+- **External table and Destination table creation**
 
 1. This part of the code, I create the **External Table** for the `ventas.csv` file. I specify the columns of the csv file, the access parameters and the location of the csv file.
 
@@ -105,6 +105,14 @@ CREATE TABLE ventas_final(
     categoria VARCHAR2(20) 
 )
 ```
+3. To avoid oracle error: `ORA-10027` (buffer overflow), run:
+   
+```sql
+EXECUTE dbms_session.reset_package;
+SET SERVEROUTPUT ON SIZE UNLIMITED
+EXECUTE sys.dbms_output.enable(NULL);
+CLEAR SCREEN
+```   
   
 
 
