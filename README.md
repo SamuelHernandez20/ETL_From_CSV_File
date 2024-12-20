@@ -57,6 +57,45 @@ GRANT READ, WRITE ON DIRECTORY YOUR_NEW_FOLDER_ALIAS TO YOUR_ORACLE_USER;
 | **Procedure** | *ExportFormatDataToNew_CSV_File*. | Export the information transformed and loaded into the destination table to a new csv file. |
 | **Job** | *RUN_ETL_JOB_AND_EXPORT_FORMAT_DATA*. | Automate the execution and export process of the ETL process. |
 
+## 💻 Code explanation:
+
+- External table and Destination table creation
+  
+  1. This part of the code, I create the **External Table** for the "sales.csv" file. I specify the columns of the csv file, the access parameters and the location of the csv file.
+
+  ```sql
+ CREATE TABLE ventas_ext
+(
+ventas_id NUMBER(4),
+fecha CHAR(10),
+artista_id NUMBER(10),
+monto NUMBER(10,2),
+pais_origen VARCHAR(50)
+)
+ORGANIZATION EXTERNAL
+(
+ TYPE ORACLE_LOADER
+ DEFAULT DIRECTORY ETL_FILES_DIR
+ ACCESS PARAMETERS (
+   RECORDS DELIMITED BY NEWLINE
+   CHARACTERSET WE8ISO8859P1
+   FIELDS TERMINATED BY ','
+   MISSING FIELD VALUES ARE NULL
+   (
+   ventas_id CHAR(4),
+   fecha CHAR(10),
+   artista_id CHAR(10),
+   monto CHAR(10),
+   pais_origen CHAR(50)
+ )
+ )
+ LOCATION ('ventas.csv')
+)
+REJECT LIMIT UNLIMITED;
+```
+2. fd
+  
+
 
 
 
