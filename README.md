@@ -48,9 +48,15 @@ GRANT READ, WRITE ON DIRECTORY YOUR_NEW_FOLDER_ALIAS TO YOUR_ORACLE_USER;
 
 | Component | Name | function |
 |----------|----------|----------|
-|  External Table   |fd   |  fd  |
-| Row 2    | Cell 5   | Cell 6   |
-| Row 3    | Cell 8   | Cell 9   |
+|  External Table   |  |   |
+|  Destination Table   |  |   |
+| Sub-Procedure | *format_data* |    |
+| Sub-Procedure | *adjust_mount* |  |
+| Sub-Procedure | *international_category* |   |
+| Main Procedure | run_etl_process |   |
+| Procedure |ExportFormatD |   |
+| Job  | |   |
+
 
 
 
