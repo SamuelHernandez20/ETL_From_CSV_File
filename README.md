@@ -200,8 +200,8 @@ v_categoría_internacional VARCHAR2(20) := 'Internacional';
 v_categoría_nacional VARCHAR2(20) := 'Nacional';
 BEGIN
 ```
-2. In the body of procedure, I define a condicional section, and im evaluate the follow logic: if the country is not `España` and `México`, assign in output parameter: `p_categoria` this variable: `v_categoría_internacional`.  
-   If else, I save: 'v_categoría_nacional' in output parameter: `p_categoria`.              
+2. In the body of procedure, I define a condicional section, and im evaluate the follow logic: if the country is neither `España` nor `México`, assign in output parameter: `p_categoria` this variable: `v_categoría_internacional`.  
+   Otherwhise, I save: 'v_categoría_nacional' in output parameter: `p_categoria`.              
 
 ```sql   
 BEGIN
@@ -214,6 +214,8 @@ END;
 /
 ```  
 ### The Main Procedure: `run_etl_process`. 
+
+*comming son...*
 
 
 
