@@ -190,8 +190,17 @@ END IF;
 END; 
 /
 ```
+  - **Third Subprocedure**: `international_category`.
+1. I create and define procedure parameters: `p_pais_origen`, and the out parameters: `p_categoria `. Later, declare and assing on then variable: `v_categoría_internacional` and `v_categoría_nacional` the correspondent values. (`Internacional`, `Nacional`). 
 
-  - **third Subprocedure**: `international_category`.        
+```sql   
+create or replace procedure international_category (p_pais_origen VARCHAR2, p_categoria OUT VARCHAR2)   
+as
+v_categoría_internacional VARCHAR2(20) := 'Internacional';
+v_categoría_nacional VARCHAR2(20) := 'Nacional';
+BEGIN
+```
+2.          
   
 
 
