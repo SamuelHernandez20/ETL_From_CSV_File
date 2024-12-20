@@ -59,7 +59,7 @@ GRANT READ, WRITE ON DIRECTORY YOUR_NEW_FOLDER_ALIAS TO YOUR_ORACLE_USER;
 
 ## 💻 Code explanation:
 
-- **External table and Destination table creation**
+- **External table and Destination table creation**.
 
 1. This part of the code, I create the **External Table** for the `ventas.csv` file. I specify the columns of the csv file, the access parameters and the location of the csv file.
 
@@ -124,7 +124,8 @@ select * from ventas_ext;
    SELECT column_name, data_type, data_length, data_precision, data_scale
    FROM user_tab_columns
    WHERE table_name = 'VENTAS_EXT';
-```    
+```
+- **Subprocedure 1: format_data**.    
   
 
 
