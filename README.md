@@ -125,7 +125,8 @@ select * from ventas_ext;
    FROM user_tab_columns
    WHERE table_name = 'VENTAS_EXT';
 ```
-- **Subprocedure 1: format_data**.    
+- The 3 subprocedures of the code: 
+  - ** Firts Subprocedure: `format_data`**.    
   
 
 
