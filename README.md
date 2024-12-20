@@ -200,7 +200,7 @@ v_categoría_internacional VARCHAR2(20) := 'Internacional';
 v_categoría_nacional VARCHAR2(20) := 'Nacional';
 BEGIN
 ```
-2. In the body of procedure, I define a condicional section, and im evaluate: if the country is not `España` and `México`, assign on out parameter: `p_categoria` this variable: `v_categoría_internacional`.  
+2. In the body of procedure, I define a condicional section, and im evaluate the follow logic: if the country is not `España` and `México`, assign on out parameter: `p_categoria` this variable: `v_categoría_internacional`.  
    If else, save: 'v_categoría_nacional' on out parameter: `p_categoria`.              
 
 ```sql   
