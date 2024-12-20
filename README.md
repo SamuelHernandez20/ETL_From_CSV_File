@@ -112,6 +112,11 @@ EXECUTE dbms_session.reset_package;
 SET SERVEROUTPUT ON SIZE UNLIMITED
 EXECUTE sys.dbms_output.enable(NULL);
 CLEAR SCREEN
+```
+4. Perform a simple query to check the information in the **External Table** 
+ 
+```sql   
+select * from ventas_ext;
 ```   
   
 
