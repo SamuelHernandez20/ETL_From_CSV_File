@@ -178,13 +178,19 @@ BEGIN
 IF p_monto < -999999 THEN
  p_monto := 0;
 ELSIF p_monto >= -999999 AND p_monto <= -1 THEN
- p_monto := ABS(p_monto); -- Conversión a Número Positivo.
+ p_monto := ABS(p_monto); 
 END IF;
 ```
+3. Secondly, I handle positive values, and assign a default number: `999999` to the in out parameter: `p_amount`, **if the value exceeds the condition threshold**. 
 
+```sql   
+IF p_monto > 999999 THEN
+ p_monto := 999999;
+END IF;
+END; 
+/
+```
 
-
-  
   - **third Subprocedure**: `international_category`.        
   
 
