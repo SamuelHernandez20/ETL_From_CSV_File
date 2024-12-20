@@ -46,9 +46,9 @@ GRANT READ, WRITE ON DIRECTORY YOUR_NEW_FOLDER_ALIAS TO YOUR_ORACLE_USER;
 ```
 ## 📋 Code Table of Contents:
 
-| Column 1 | Column 2 | Column 3 |
+| Component | Name | function |
 |----------|----------|----------|
-| Row 1    | Cell 2   | Cell 3   |
+|  External Table   |fd   |  fd  |
 | Row 2    | Cell 5   | Cell 6   |
 | Row 3    | Cell 8   | Cell 9   |
 
