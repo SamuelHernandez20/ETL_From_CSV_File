@@ -63,7 +63,7 @@ GRANT READ, WRITE ON DIRECTORY YOUR_NEW_FOLDER_ALIAS TO YOUR_ORACLE_USER;
   
   1. This part of the code, I create the **External Table** for the "sales.csv" file. I specify the columns of the csv file, the access parameters and the location of the csv file.
 
-  ```sql
+```sql
  CREATE TABLE ventas_ext
 (
 ventas_id NUMBER(4),
@@ -93,7 +93,18 @@ ORGANIZATION EXTERNAL
 )
 REJECT LIMIT UNLIMITED;
 ```
-2. fd
+2. I create the destination table: `ventas_final`, adding an additional column: `category`.
+   
+```sql
+CREATE TABLE ventas_final(
+    ventas_final_id NUMBER PRIMARY KEY,
+    fecha DATE,
+    artista_id NUMBER,
+    monto NUMBER,
+    pais_origen VARCHAR2(50),
+    categoria VARCHAR2(20) 
+)
+```
   
 
 
