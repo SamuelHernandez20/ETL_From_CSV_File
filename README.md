@@ -48,14 +48,14 @@ GRANT READ, WRITE ON DIRECTORY YOUR_NEW_FOLDER_ALIAS TO YOUR_ORACLE_USER;
 
 | Component | Name | function |
 |----------|----------|----------|
-| **External Table** | *ventas_ext*. |   |
-| **Destination Table** |  |   |
-| **Sub-Procedure** | *format_data*. |    |
-| **Sub-Procedure** | *adjust_mount*. |  |
-| **Sub-Procedure** | *international_category*. |   |
-| **Main Procedure** | *run_etl_process*. |   |
-| **Procedure** | *ExportFormatDataToNew_CSV_File*.  |   |
-| **Job** | *RUN_ETL_JOB_AND_EXPORT_FORMAT_DATA*. |   |
+| **External Table** | *ventas_ext*. | Load data from csv file. |
+| **Destination Table** | *ventas_final*. | Load the transformed data. |
+| **Sub-Procedure** | *format_data*. | format the data type of the external table. |
+| **Sub-Procedure** | *adjust_mount*. | Clean dirty values ​​from the amount. |
+| **Sub-Procedure** | *international_category*. | Determine the Category according to the country. |
+| **Main Procedure** | *run_etl_process*. | Encapsulate the main logic and previous subprocedures. |
+| **Procedure** | *ExportFormatDataToNew_CSV_File*. | Export the information transformed and loaded into the destination table to a new csv file. |
+| **Job** | *RUN_ETL_JOB_AND_EXPORT_FORMAT_DATA*. | Automate the execution and export process of the ETL process. |
 
 
 
