@@ -138,7 +138,7 @@ create or replace procedure format_data (
     p_monto_sin_convertir IN OUT ventas_ext.monto%type)   
 as
 ```
-2. Here I am declaring the boolean constants that I will use in the IF condition.
+2. Here I am declaring the **boolean constants** that I will use in the **IF condition**.
 
 ```sql   
  v_condicion CONSTANT BOOLEAN :=
@@ -147,12 +147,11 @@ as
  AND p_artista_id_sin_convertir IS NOT NULL
  AND p_monto_sin_convertir IS NOT NULL;
 ```
-3. In the body of the procedure I evaluate that no parameter is null, and if true, I report the data conversion.  
+3. In the body of the procedure I evaluate that **no parameter is null**, and **if true, I report the data conversion**.  
 
 ```sql   
 BEGIN
     IF v_condicion THEN
-    -- Convertir el 'id_ventas' de tipo CHAR a tipo NUMBER:
       p_ventas_id_sin_convertir := TO_NUMBER(p_ventas_id_sin_convertir);
       
       p_cadena_fecha_sin_convertir := TO_DATE(p_cadena_fecha_sin_convertir, 'YYYY-MM-DD');
@@ -164,10 +163,20 @@ BEGIN
 END;
 /
 ```
-
-
-
   - **Second Subprocedure**: `adjust_mount`.
+1. I create and define procedure parameters. **Remove possible decimal values** ​​from the beginning using: `trunc(arg1, integer)` in the input parameter: `p_monto`.  
+
+```sql   
+create or replace procedure adjust_amount (p_monto IN OUT NUMBER)   
+as
+BEGIN
+-- Elimino posibles valores decimales desde el principio:
+ p_monto := trunc(p_monto,0);
+```
+
+
+
+  
   - **third Subprocedure**: `international_category`.        
   
 
