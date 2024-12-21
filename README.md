@@ -367,7 +367,7 @@ I perform the save operation.
 - En la **Primera Iteración**: el **primer COMMIT** se realizará cuando el contador de commit sea igual a este resultado.
 - En la **Segunda Iteración**: el **segundo COMMIT** se realizará cuando el contador de commit sea igual a **400**. (200+200).
 
- ![](ETL/Images/ETL_Process_Diagram_.png)
+ ![](ETL/Images/Guardo_Commits_doscientos_registros.png)
 
 And if neither of the two are met, it sets the **commit counter** and the **number of commits** made to `0`.
 
