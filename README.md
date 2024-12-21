@@ -450,3 +450,43 @@ UTL_FILE.FCLOSE(ARCHIVO_VENTAS_FORMATEADO);
 END;
 /
 ```
+Finally I schedule the task using `DBMS_SCHEDULER.CREATE_JOB`, where I call the procedure: `run_etl_process()` and `ExportFormatDataToNew_CSV_File()`
+to automate the ETL process and data export to **new CSV file**. It runs daily around `18:30`.
+
+```sql
+BEGIN
+    DBMS_SCHEDULER.CREATE_JOB(
+        job_name        => 'RUN_ETL_JOB_AND_EXPORT_FORMAT_DATA',
+        job_type        => 'PLSQL_BLOCK',
+        -- Here I call both procedures.
+        job_action      => 'BEGIN run_etl_process(); ExportFormatDataToNew_CSV_File(); END;',
+        start_date      => SYSDATE,
+        repeat_interval => 'FREQ=DAILY; BYHOUR=18; BYMINUTE=30; BYSECOND=0',
+        enabled         => TRUE);
+        
+END;
+```
+Using this query you can obtain detailed information about the **Job**:
+
+```sql
+SELECT * FROM user_scheduler_jobs WHERE job_name = 'RUN_ETL_JOB_AND_EXPORT_FORMAT_DATA';
+```
+- Additional commands:
+```sql
+-- To Manually Execute the Job:
+BEGIN
+   DBMS_SCHEDULER.RUN_JOB(job_name => 'RUN_ETL_JOB_AND_EXPORT_FORMAT_DATA');
+END;
+/
+```
+```sql
+-- To manually Delete the Job:
+BEGIN
+   DBMS_SCHEDULER.DROP_JOB(job_name => 'RUN_ETL_JOB_AND_EXPORT_FORMAT_DATA');
+END;
+/
+```
+
+## 👤 Author:
+
+*Developed by **Samuel Hernández Santisteban***.
