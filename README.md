@@ -450,11 +450,13 @@ UTL_FILE.FCLOSE(ARCHIVO_VENTAS_FORMATEADO);
 END;
 /
 ```
-- Plain CSV file: `sales.csv`
- ![](ETL/Images/Archivo_Ventas_Sin_Formato.png)
+- Plain CSV file: `sales.csv`.
+
+![](ETL/Images/Archivo_Ventas_Sin_Formato.png)
  
-- CSV file with format: `ventas_formateado.csv`
- ![](ETL/Images/Archivo_Ventas_Con_Formato.png)
+- CSV file with format: `ventas_formateado.csv`.
+
+![](ETL/Images/Archivo_Ventas_Con_Formato.png)
 
 ### Job Creation:
 
