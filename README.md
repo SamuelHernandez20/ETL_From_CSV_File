@@ -305,6 +305,147 @@ Para este caso particular usaré el bucle: `FOR` en lugar de: `FORALL`, debido a
      VENTAS_ART(i).artista_id, VENTAS_ART(i).monto, 
      VENTAS_ART(i).pais_origen, v_categoría);
 ```
+To avoid doing a **COMMIT** for each iteration, **I evaluate dynamically based on the number of records
+existing, every how many records to do it**. Well, if a **COMMIT** operation were performed for each record and I have **10,000** records,
+**It would be 10,000 save operations to perform**, and this would not be optimal.
+
+Therefore, within this part of the loop, I set a **counter for commits**. Below, **two boolean variables**, which I will use as part
+of an if condition to evaluate whether the **counter is equal to the result of the register division**.
+
+ ```sql
+     v_contador_commit := v_contador_commit + i;
+   
+     CUATRO_COMMITS := v_contador_commit = v_división_registros_entre_4;
+     DOS_COMMITS := v_contador_commit = v_división_registros_entre_2;
+```
+Before that, I establish a first input condition to verify that the table
+has a number of records that is within the range specified by the boolean variables: `RANGE_1` or `RANGE_2`. 
+Regardless of which one, well, that is evaluated in the following condition.
+
+ ```sql
+ IF RANGO_1 OR RANGO_2 THEN 
+ ```
+If it is met, the program moves on to this second evaluation. Here, it is evaluated that **if the number of records is found 
+within the range specified in the boolean variable: `RANGE_1` and the commit counter is equal to the result of the log split
+divided by 4**: (`FOUR_COMMITS := v_counter_commit = v_division_records_between_4;`) the **COMMIT** operation will be performed every (**x**) 
+records according to the result of the division, until completed.
+
+ ```sql
+ IF RANGO_1 AND CUATRO_COMMITS THEN
+    -- If this process did not generate any errors, I save the changes:
+    COMMIT;
+    v_contador_commit_valor := v_contador_commit;
+    v_división_registros_entre_4 := v_división_registros_entre_4 + v_resultado_entre_4;
+    v_num_commit := v_num_commit + 1;
+    DBMS_OUTPUT.PUT_LINE('COMMIT ' || v_num_commit || ' ITERACIÓN: ' || v_contador_commit_valor);
+ ```
+
+Por ejemplo; Si la tabla tiene **1000 registros**, estos se dividirá entre **4**, y dará como resultado: `250`.
+
+- En la **Primera Iteración**: el **primer COMMIT** se realizará cuando el contador de commit sea igual a este resultado.
+- En la **Segunda Iteración**: el **segundo COMMIT** se realizará cuando el contador de commit sea igual a **500**. (250+250).
+- En la **Tercera Iteración**: el **tercero COMMIT** se realizará cuando el contador de commit sea igual a **750**. (250+250+250).
+- En la **Cuarta Iteración**: el **cuarto COMMIT** se realizará cuando el contador de commit sea igual a **1000**. (250+250+250+250).
+
+ ![](ETL/Images/ETL_Process_Diagram_.png)
 
 
 
+Otherwise, if the number of records is within the range specified in the boolean variable: `RANGE_2`, and the counter 
+of commits is equal to the result of dividing the number of records by 2: `DOS_COMMITS := v_commit_counter = v_division_registros_between_2;`,
+I perform the save operation.
+
+ ```sql
+  ELSIF RANGO_2 AND DOS_COMMITS THEN
+    -- If this process did not generate any errors, I save the changes:
+    COMMIT;
+    v_contador_commit_valor := v_contador_commit;
+    v_división_registros_entre_2 := v_división_registros_entre_2 + v_resultado_entre_2;
+    v_num_commit := v_num_commit + 1;
+    DBMS_OUTPUT.PUT_LINE('COMMIT ' || v_num_commit || ' ITERACIÓN: ' || v_contador_commit_valor);
+ ```
+- En la **Primera Iteración**: el **primer COMMIT** se realizará cuando el contador de commit sea igual a este resultado.
+- En la **Segunda Iteración**: el **segundo COMMIT** se realizará cuando el contador de commit sea igual a **400**. (200+200).
+
+ ![](ETL/Images/ETL_Process_Diagram_.png)
+
+And if neither of the two are met, it sets the **commit counter** and the **number of commits** made to `0`.
+
+ ```sql
+   ELSE
+   v_contador_commit := 0;
+   v_num_commit := v_num_commit;     
+   END IF;
+ END IF; 
+ ```
+In case of error, handle it with an **exception** that reverts the changes and logs the error:
+
+ ```sql
+      EXCEPTION
+        WHEN OTHERS THEN
+                -- In case of error, the process is reverted again from the SAVEPOINT:
+                ROLLBACK TO SAVEPOINT iteracion_inicio;
+                v_error := TRUE;
+                v_contador_commit := 0;
+                v_num_commit := 0;  
+    END; 
+    END LOOP;
+    DBMS_OUTPUT.PUT_LINE('---------------------------------------------------------------------');
+ ```
+If an error actually arose, for example, with some **subprocedure**, the variable: `v_error` will be set to: `TRUE`.
+I'll evaluate this with an if condition, and print the corresponding message:
+
+ ```sql
+      IF v_error THEN
+        DBMS_OUTPUT.PUT_LINE('');
+        DBMS_OUTPUT.PUT_LINE('Surgió un error en alguna iteración del bucle.');
+        ELSE
+        DBMS_OUTPUT.PUT_LINE('');
+        DBMS_OUTPUT.PUT_LINE('El proceso se completó de forma correcta.');
+      END IF; 
+END;
+END;
+```
+
+### The export procedure: `ExportFormatDataToNew_CSV_File`.
+
+Next I will encapsulate in a stored procedure the process of generating a **new CSV file called**: 'ventas_formateado.csv' 
+with the information cleaned from the table: 'final_sales'. To then be able to program it through a **JOB**.
+
+ ```sql
+CREATE OR REPLACE PROCEDURE ExportFormatDataToNew_CSV_File 
+IS
+DECLARE
+-- I indicate that it is a file type. 
+ARCHIVO_VENTAS_FORMATEADO UTL_FILE.FILE_TYPE;
+BEGIN
+
+ /* Using: 'UTL_FILE.FOPEN', I indicate the opening of the file, indicating the alias of the directory, the csv file
+    where I want to export the information. Finally, 'W' is assigned, to indicate that it is a write operation. */
+
+ARCHIVO_VENTAS_FORMATEADO := UTL_FILE.FOPEN('ETL_FILES_DIR','ventas_formateado.csv','W');
+```
+With this **first loop**, I'm extracting the **column names**, and placing them
+in the **header** of the **CSV file**, dynamically:
+
+```sql
+FOR i in (SELECT column_name FROM user_tab_columns WHERE table_name = 'VENTAS_FINAL')
+LOOP
+ UTL_FILE.PUT (ARCHIVO_VENTAS_FORMATEADO, i.COLUMN_NAME||',');
+END LOOP;
+UTL_FILE.PUT (ARCHIVO_VENTAS_FORMATEADO, CHR(10));
+```
+In this **second loop** I am inserting using the command: `UTL_FILE.PUT_LINE` each of the records of the destination table: `sales_final`
+in the new CSV file: `formatted_sales.csv`.
+
+```sql
+FOR i in (select * from ventas_final order by artista_id asc)
+LOOP
+ UTL_FILE.PUT_LINE (ARCHIVO_VENTAS_FORMATEADO, i.VENTAS_FINAL_ID||','||i.FECHA||','||i.ARTISTA_ID||','||i.MONTO
+                    ||','||i.PAIS_ORIGEN||','||i.CATEGORIA);
+END LOOP;
+--  I indicate the close of the file.
+UTL_FILE.FCLOSE(ARCHIVO_VENTAS_FORMATEADO);
+END;
+/
+```
