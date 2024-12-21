@@ -350,7 +350,6 @@ Por ejemplo; Si la tabla tiene **1000 registros**, estos se dividirá entre **4*
  ![](ETL/Images/Guardado_de_Commits_mil_registros.png)
 
 
-
 Otherwise, if the number of records is within the range specified in the boolean variable: `RANGE_2`, and the counter 
 of commits is equal to the result of dividing the number of records by 2: `DOS_COMMITS := v_commit_counter = v_division_registros_between_2;`,
 I perform the save operation.
@@ -364,6 +363,8 @@ I perform the save operation.
     v_num_commit := v_num_commit + 1;
     DBMS_OUTPUT.PUT_LINE('COMMIT ' || v_num_commit || ' ITERACIÓN: ' || v_contador_commit_valor);
  ```
+Por ejemplo; Si la tabla tiene **400 registros**, estos se dividirá entre **2**, y dará como resultado: `200`.
+
 - En la **Primera Iteración**: el **primer COMMIT** se realizará cuando el contador de commit sea igual a este resultado.
 - En la **Segunda Iteración**: el **segundo COMMIT** se realizará cuando el contador de commit sea igual a **400**. (200+200).
 
