@@ -215,7 +215,73 @@ END;
 ```  
 ### The Main Procedure: `run_etl_process`. 
 
-*comming son...*
+In the declaration of this procedure, I am declaring the collection `artist_sales` from the external table: `ext_sales` and telling it 
+make the data type the same using: `%rowtype`.
+
+```sql 
+CREATE OR REPLACE PROCEDURE run_etl_process 
+IS
+BEGIN
+DECLARE 
+-- Colección para la extracción de los datos la External Table:
+   TYPE ventas_artistas IS TABLE OF ventas_ext%rowtype INDEX BY PLS_INTEGER;
+```
+This part corresponds to the program's **variable** and **constant** declaration block:
+
+```sql
+   VENTAS_ART ventas_artistas;
+   v_categoría VARCHAR2(20);
+   v_error BOOLEAN := FALSE;
+   
+   v_num_registros NUMBER := 0;
+   v_contador_commit NUMBER := 0;
+   v_num_commit NUMBER := 0;
+   v_división_registros_entre_2 NUMBER;
+   v_resultado_entre_2 NUMBER;
+   v_división_registros_entre_4 NUMBER;
+   v_resultado_entre_4 NUMBER;
+   v_contador_commit_valor NUMBER := 0;
+   
+   RANGO_1 BOOLEAN := FALSE;
+   RANGO_2 BOOLEAN := FALSE;
+   CUATRO_COMMITS BOOLEAN := FALSE;
+   DOS_COMMITS BOOLEAN := FALSE;
+```
+At the beginning of the program, I perform an extract of the loaded data from the csv file into the external table: `sales_ext`
+and I use the statement: `BULK COLLECT INTO` to perform a massive load of information into the created collection. This is useful when
+The volume of records in a table is too large and it is not optimal to process them one by one. 
+
+Below I perform a prior deletion of the table to avoid duplicate data or non-updated data. First I check that the table is not empty.
+
+```sql
+BEGIN
+   SELECT * BULK COLLECT INTO VENTAS_ART FROM ventas_ext;
+   
+   DBMS_OUTPUT.PUT_LINE('## Borrado Previo de la Tabla de Destino: ' || '"ventas_final" ##');
+   select count(*) into v_num_registros from ventas_final;
+
+   IF v_num_registros > 0 THEN
+     DBMS_OUTPUT.PUT_LINE('La Tabla de Destino está llena. Ejecutando operación previa de borrado.');
+    delete from ventas_final;
+    ELSE
+    DBMS_OUTPUT.PUT_LINE('??? La Tabla de Destino está vacía ???. Omitiendo operación previa de borrado.');
+   END IF;
+```
+In this code block, I am capturing the **operation** and then the **result** of dividing the number of records by **4** and **2** 
+what's in the table. This will be useful later to perform an operation: `COMMIT`, **every few records**, **depending on the range
+of records in which the table is located**. As you can in the condition of the **boolean variables**: `RANGE_1` and `RANGO_2`.
+
+```sql
+    v_división_registros_entre_4 := v_num_registros / 4;
+    v_división_registros_entre_2 := v_num_registros / 2;
+    
+    v_resultado_entre_4 := v_división_registros_entre_4;
+    v_resultado_entre_2 := v_división_registros_entre_2;
+    
+    RANGO_1 := v_num_registros >= 1000 AND v_num_registros <= 10000;
+    RANGO_2 := v_num_registros >= 100 AND v_num_registros <= 999;
+```
+
 
 
 
