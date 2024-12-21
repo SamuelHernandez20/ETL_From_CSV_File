@@ -282,6 +282,29 @@ of records in which the table is located**. As you can in the condition of the *
     RANGO_2 := v_num_registros >= 100 AND v_num_registros <= 999;
 ```
 
+Para este caso particular usaré el bucle: `FOR` en lugar de: `FORALL`, debido a que hay operaciones más complejas.
+
+ ```sql   
+    FOR i IN 1..VENTAS_ART.COUNT LOOP
+      
+    -- Set a SAVEPOINT to revert changes in case of error.
+       SAVEPOINT iteracion_inicio;
+       BEGIN
+      -- 1. Transform to the correct data type (NUMBER & DATE) using the first subprocedure:
+      format_data(VENTAS_ART(i).ventas_id, VENTAS_ART(i).fecha, VENTAS_ART(i).artista_id, VENTAS_ART(i).monto); 
+      
+      -- 2. Adjust the Amount (cleaning of values) using the second subprocedure:
+     adjust_amount (VENTAS_ART(i).monto);
+      
+      -- 3. Assign the category: 'Internacional' or 'Nacional', as appropriate. using the third subprocedure:
+      international_category(VENTAS_ART(i).pais_origen, v_categoría);
+      
+      -- 4. Loading data into the Destination Table: 'ventas_final'. Using the 'Insert Into' statement
+     INSERT INTO ventas_final VALUES(
+     VENTAS_ART(i).ventas_id, VENTAS_ART(i).fecha, 
+     VENTAS_ART(i).artista_id, VENTAS_ART(i).monto, 
+     VENTAS_ART(i).pais_origen, v_categoría);
+```
 
 
 
