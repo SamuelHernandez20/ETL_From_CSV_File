@@ -347,7 +347,7 @@ Por ejemplo; Si la tabla tiene **1000 registros**, estos se dividirá entre **4*
 - En la **Tercera Iteración**: el **tercero COMMIT** se realizará cuando el contador de commit sea igual a **750**. (250+250+250).
 - En la **Cuarta Iteración**: el **cuarto COMMIT** se realizará cuando el contador de commit sea igual a **1000**. (250+250+250+250).
 
- ![](ETL/Images/ETL_Process_Diagram_.png)
+ ![](ETL/Images/Guardado_de_Commits_mil_registros.png)
 
 
 
