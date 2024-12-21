@@ -450,6 +450,14 @@ UTL_FILE.FCLOSE(ARCHIVO_VENTAS_FORMATEADO);
 END;
 /
 ```
+- Plain CSV file: `sales.csv`
+ ![](ETL/Images/Archivo_Ventas_Sin_Formato.png)
+ 
+- CSV file with format: `ventas_formateado.csv`
+ ![](ETL/Images/Archivo_Ventas_Con_Formato.png)
+
+### Job Creation:
+
 Finally I schedule the task using `DBMS_SCHEDULER.CREATE_JOB`, where I call the procedure: `run_etl_process()` and `ExportFormatDataToNew_CSV_File()`
 to automate the ETL process and data export to **new CSV file**. It runs daily around `18:30`.
 
